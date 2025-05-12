@@ -1,1 +1,95 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fraud Transaction Monitor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2em;
+      background: #f4f6f8;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: 2em auto;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .fraud {
+      color: red;
+      font-weight: bold;
+    }
+    .safe {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Fraud Transaction Monitor</h1>
+  <div id="output">
+    <p style="text-align: center;">Loading data...</p>
+  </div>
+
+  <script>
+    const url = 'http://<YOUR-NODERED-IP>:1880/analyze'; // ⬅️ Replace with your actual Node-RED server IP
+
+    async function fetchData() {
+      try {
+        const res = await fetch(url);
+        const transactions = await res.json();
+
+        const rows = transactions.map(tx => `
+          <tr>
+            <td>${tx.time}</td>
+            <td>${tx.user_id}</td>
+            <td>$${tx.amount.toFixed(2)}</td>
+            <td>${tx.location}</td>
+            <td>${tx.description}</td>
+            <td class="${tx.isFraud ? 'fraud' : 'safe'}">
+              ${tx.isFraud ? '⚠️ Fraud' : '✅ Safe'}
+            </td>
+          </tr>
+        `).join('');
+
+        document.getElementById('output').innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>User ID</th>
+                <th>Amount</th>
+                <th>Location</th>
+                <th>Description</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      } catch (err) {
+        document.getElementById('output').innerHTML = `<p style="color:red; text-align:center;">Error loading data: ${err.message}</p>`;
+      }
+    }
+
+    fetchData();
+    setInterval(fetchData, 5000); // Refresh every 5 seconds
+  </script>
+
+</body>
+</html>
